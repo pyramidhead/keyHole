@@ -1,5 +1,5 @@
 #!/bin/bash
-# initial system-analysis script
+# bash system-analysis script; writes output to a directory called keyhole
  
 # make sure we're root
 if [ "$EUID" -ne 0 ]
@@ -7,16 +7,16 @@ if [ "$EUID" -ne 0 ]
     exit
 fi
  
-# make audit directory
-mkdir -p /audit
+# make keyhole directory
+mkdir -p /keyhole
  
 # host info
-lspci > /audit/lspci.txt
+lspci > /keyhole/lspci.txt
  
 # cpu info
 cpuCount=`nproc`
 cpuInfo=`vmstat`
-cat /proc/cpuinfo > /audit/cpuVerbose.txt
+cat /proc/cpuinfo > /keyhole/cpuVerbose.txt
  
 # memory
 pageSize=`getconf PAGESIZE`
@@ -35,7 +35,7 @@ mountDetails=`mount`
 # database
 mysqldProcess=`pgrep -f 'mysqld[^_]'`
 mysqldStatus=`cat /proc/$mysqldProcess/status`
-cat /proc/$mysqldProcess/limits > /audit/mysqldLimits.txt
+cat /proc/$mysqldProcess/limits > /keyhole/mysqldLimits.txt
  
 # networking
 ifConfig=`ifconfig`
@@ -46,107 +46,106 @@ else
     myDNS=`dig +noquestion +nocomments +nocmd +nostats $myHost. | awk 'END{print;}'`
 fi
  
-# output to master audit file
-if [[ -s /audit/lspci.txt ]]; then
-    echo "Host environment:" > /audit/keyhole.log
-    cat /audit/lspci.txt | while read line; do echo "$line" >> /audit/keyhole.log; done
+# output to master keyhole file
+if [[ -s /keyhole/lspci.txt ]]; then
+    echo "Host environment:" > /keyhole/keyhole.log
+    cat /keyhole/lspci.txt | while read line; do echo "$line" >> /keyhole/keyhole.log; done
 else
-    echo "Host environment: information not available." > /audit/keyhole.log
+    echo "Host environment: information not available." > /keyhole/keyhole.log
 fi
-echo >> /audit/keyhole.log
-echo "CPU Diagnostics:" >> /audit/keyhole.log
+echo >> /keyhole/keyhole.log
+echo "CPU Diagnostics:" >> /keyhole/keyhole.log
 if [ -z "$cpuCount" ]; then
-    echo "Cores: CPU count unavailable." >> /audit/keyhole.log
+    echo "Cores: CPU count unavailable." >> /keyhole/keyhole.log
 else
-    echo "Cores: "$cpuCount  >> /audit/keyhole.log
+    echo "Cores: "$cpuCount  >> /keyhole/keyhole.log
 fi
 if [ -z "$cpuInfo" ]; then
-    echo "CPU usage stats unavailable." >> /audit/keyhole.log
+    echo "CPU usage stats unavailable." >> /keyhole/keyhole.log
 else
-    echo -e "$cpuInfo" >> /audit/keyhole.log
+    echo -e "$cpuInfo" >> /keyhole/keyhole.log
 fi
-echo >> /audit/keyhole.log
-echo "Memory Diagnostics:" >> /audit/keyhole.log
-echo "Page Size: "$pageSize >> /audit/keyhole.log
+echo >> /keyhole/keyhole.log
+echo "Memory Diagnostics:" >> /keyhole/keyhole.log
+echo "Page Size: "$pageSize >> /keyhole/keyhole.log
 if [ -z "$freeMem" ]; then
-    echo "Free memory stats unavailable." >> /audit/keyhole.log
+    echo "Free memory stats unavailable." >> /keyhole/keyhole.log
 else
-    echo -e "$freeMem" > /audit/keyhole.log
+    echo -e "$freeMem" > /keyhole/keyhole.log
 fi
 if [ -z "$detailedMem" ]; then
-    echo "Detailed memory stats unavailable." >> /audit/keyhole.log
+    echo "Detailed memory stats unavailable." >> /keyhole/keyhole.log
 else
-    echo -e "$detailedMem" >> /audit/keyhole.log
+    echo -e "$detailedMem" >> /keyhole/keyhole.log
 fi
 if [ -z "$topMemHogs" ]; then
-    echo -e "Top 5 Memory Users query failed." >> /audit/keyhole.log
+    echo -e "Top 5 Memory Users query failed." >> /keyhole/keyhole.log
 else
-    echo -e "Top 5 Memory Users:\n$topMemHogs" >> /audit/keyhole.log
+    echo -e "Top 5 Memory Users:\n$topMemHogs" >> /keyhole/keyhole.log
 fi
-echo >> /audit/keyhole.log
-echo "Disk Diagnostics:" >> /audit/keyhole.log
+echo >> /keyhole/keyhole.log
+echo "Disk Diagnostics:" >> /keyhole/keyhole.log
 if [ -z "$diskUsage" ]; then
-    echo -e "Disk usage stats unavailable" >> /audit/keyhole.log
+    echo -e "Disk usage stats unavailable" >> /keyhole/keyhole.log
 else
-    echo -e "Disk Usage:\n$diskUsage" >> /audit/keyhole.log
+    echo -e "Disk Usage:\n$diskUsage" >> /keyhole/keyhole.log
 fi
 if [ -z "$blockDevices" ]; then
-    echo -e "Block Device details unavailable." >> /audit/keyhole.log
+    echo -e "Block Device details unavailable." >> /keyhole/keyhole.log
 else
-    echo -e "Block Devices:\n$blockDevices" >> /audit/keyhole.log
+    echo -e "Block Devices:\n$blockDevices" >> /keyhole/keyhole.log
 fi
 if [ -z "$blockSize" ]; then
     echo -e "Block size details unavailable."
 else
-    echo "Block Size: "$blockSize >> /audit/keyhole.log
+    echo "Block Size: "$blockSize >> /keyhole/keyhole.log
 fi
 if [ -z "$minorFaults" ]; then
-    echo -e "Minor fault details unavailable." >> /audit/keyhole.log
+    echo -e "Minor fault details unavailable." >> /keyhole/keyhole.log
 else
-    echo "Minor File System Faults: "$minorFaults >> /audit/keyhole.log
+    echo "Minor File System Faults: "$minorFaults >> /keyhole/keyhole.log
 fi
 if [ -z "$majorFaults" ]; then
-    echo -e "Major fault details unavailable." >> /audit/keyhole.log
+    echo -e "Major fault details unavailable." >> /keyhole/keyhole.log
 else
-    echo "Major File System Faults: "$majorFaults >> /audit/keyhole.log
+    echo "Major File System Faults: "$majorFaults >> /keyhole/keyhole.log
 fi
 if [ -z "$mountDetails" ]; then
-    echo -e "Mount details unavailable." >> /audit/keyhole.log
+    echo -e "Mount details unavailable." >> /keyhole/keyhole.log
 else
-    echo -e "Mount Details:\n$mountDetails" >> /audit/keyhole.log
+    echo -e "Mount Details:\n$mountDetails" >> /keyhole/keyhole.log
 fi
-echo >> /audit/keyhole.log
-echo "Network Diagnostics:" >> /audit/keyhole.log
+echo >> /keyhole/keyhole.log
+echo "Network Diagnostics:" >> /keyhole/keyhole.log
 if [ -z "$myDNS" ]; then
-    echo -e "DNS details unavailable." >> /audit/keyhole.log
+    echo -e "DNS details unavailable." >> /keyhole/keyhole.log
 else
-    echo -e "$myDNS" >> /audit/keyhole.log
+    echo -e "$myDNS" >> /keyhole/keyhole.log
 fi
 if [ -z "$ifConfig" ]; then
-    echo -e "Network configuration unavailable." >> /audit/keyhole.log
+    echo -e "Network configuration unavailable." >> /keyhole/keyhole.log
 else
-    echo -e "$ifConfig" >> /audit/keyhole.log
+    echo -e "$ifConfig" >> /keyhole/keyhole.log
 fi
-echo >> /audit/keyhole.log
-echo "Database Diagnostics:" >> /audit/keyhole.log
+echo >> /keyhole/keyhole.log
+echo "Database Diagnostics:" >> /keyhole/keyhole.log
 if [ -z "$mysqldProcess" ]; then
-    echo "MySql Process: "$mysqldProcess >> /audit/keyhole.log
+    echo "MySql Process: "$mysqldProcess >> /keyhole/keyhole.log
 fi
-echo "mysqld Limits:" >> /audit/keyhole.log
-if [[ -s /audit/mysqldLimits.txt ]]; then
-    cat /audit/mysqldLimits.txt | while read line; do echo "$line" >> /audit/keyhole.log; done
+echo "mysqld Limits:" >> /keyhole/keyhole.log
+if [[ -s /keyhole/mysqldLimits.txt ]]; then
+    cat /keyhole/mysqldLimits.txt | while read line; do echo "$line" >> /keyhole/keyhole.log; done
 else
-    echo -e "MySQL limits unavailable." >> /audit/keyhole.log
+    echo -e "MySQL limits unavailable." >> /keyhole/keyhole.log
 fi
-echo "Verbose CPU details:" >> /audit/keyhole.log
-if [[ -s /audit/cpuVerbose.txt ]]; then
-     cat /audit/cpuVerbose.txt | while read line; do echo "$line" >> /audit/keyhole.log; done
+echo "Verbose CPU details:" >> /keyhole/keyhole.log
+if [[ -s /keyhole/cpuVerbose.txt ]]; then
+     cat /keyhole/cpuVerbose.txt | while read line; do echo "$line" >> /keyhole/keyhole.log; done
 else
-    echo -e "Verbose CPU info unavailable." >> /audit/keyhole.log
+    echo -e "Verbose CPU info unavailable." >> /keyhole/keyhole.log
 fi
  
 # clean up after myself
- 
-rm -f /audit/mysqldLimits.txt
-rm -f /audit/cpuVerbose.txt
-rm -f /audit/lspci.txt
+rm -f /keyhole/mysqldLimits.txt
+rm -f /keyhole/cpuVerbose.txt
+rm -f /keyhole/lspci.txt
