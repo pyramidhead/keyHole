@@ -36,6 +36,7 @@ mountDetails=`mount`
 mysqldProcess=`pgrep -f 'mysqld[^_]'`
 mysqldStatus=`cat /proc/$mysqldProcess/status`
 cat /proc/$mysqldProcess/limits > /keyhole/mysqldLimits.txt
+# we should write mongodb in here as well
  
 # networking
 ifConfig=`ifconfig`
