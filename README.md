@@ -1,2 +1,2 @@
 # keyHole
-linux systems analysis script
+linux systems analysis script. requires root.
